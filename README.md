@@ -89,8 +89,8 @@ FRONTEND_URL="http://localhost:5173"
 # Razorpay (for payments)
 RAZORPAY_KEY_ID="your-razorpay-key-id"
 RAZORPAY_KEY_SECRET="your-razorpay-key-secret"
-RAZORPAY_MONTHLY_AMOUNT=99900  # ₹999 in paise
-RAZORPAY_YEARLY_AMOUNT=899900  # ₹8999 in paise
+RAZORPAY_MONTHLY_AMOUNT=99900  # ₹999 in rupee
+RAZORPAY_YEARLY_AMOUNT=899900  # ₹8999 in rupee
 MONTHLY_PRICE=999
 YEARLY_PRICE=8999
 ```
