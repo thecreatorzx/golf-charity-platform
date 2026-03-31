@@ -1,0 +1,13 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const subscription_controller_1 = require("../controllers/subscription.controller");
+const auth_middleware_1 = require("../middleware/auth.middleware");
+const router = (0, express_1.Router)();
+router.use(auth_middleware_1.authenticate);
+router.post('/initiate', subscription_controller_1.initiateSubscription);
+router.post('/confirm', subscription_controller_1.confirmSubscription);
+router.post('/cancel', subscription_controller_1.cancel);
+router.post('/mock-activate', subscription_controller_1.mockActivate);
+router.get('/', subscription_controller_1.fetchSubscription);
+exports.default = router;
