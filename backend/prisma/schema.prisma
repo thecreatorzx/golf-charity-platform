@@ -1,0 +1,197 @@
+// backend/prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─── ENUMS ───────────────────────────────────────────────
+
+enum Role {
+  SUBSCRIBER
+  ADMIN
+}
+
+enum SubscriptionPlan {
+  MONTHLY
+  YEARLY
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  INACTIVE
+  CANCELLED
+  LAPSED
+}
+
+enum DrawStatus {
+  PENDING
+  SIMULATED
+  PUBLISHED
+}
+
+enum DrawAlgorithm {
+  RANDOM
+  WEIGHTED
+}
+
+enum MatchType {
+  FIVE_MATCH
+  FOUR_MATCH
+  THREE_MATCH
+}
+
+enum VerificationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+}
+
+// ─── MODELS ──────────────────────────────────────────────
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String
+  role      Role     @default(SUBSCRIBER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  subscription        Subscription?
+  scores              GolfScore[]
+  charityContribution CharityContribution?
+  drawEntries         DrawEntry[]
+  winners             Winner[]
+
+  @@map("users")
+}
+
+model Subscription {
+  id                String             @id @default(cuid())
+  userId            String             @unique
+  plan              SubscriptionPlan
+  status            SubscriptionStatus @default(INACTIVE)
+  razorpayOrderId   String?
+  razorpayPaymentId String?
+  currentPeriodEnd  DateTime?
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("subscriptions")
+}
+
+model GolfScore {
+  id         String   @id @default(cuid())
+  userId     String
+  score      Int // 1–45 Stableford
+  datePlayed DateTime
+  createdAt  DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("golf_scores")
+}
+
+model Charity {
+  id          String   @id @default(cuid())
+  name        String
+  description String
+  imageUrl    String?
+  website     String?
+  featured    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  contributions CharityContribution[]
+
+  @@map("charities")
+}
+
+model CharityContribution {
+  id         String   @id @default(cuid())
+  userId     String   @unique
+  charityId  String
+  percentage Float    @default(10) // min 10%
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  charity Charity @relation(fields: [charityId], references: [id])
+
+  @@map("charity_contributions")
+}
+
+model Draw {
+  id               String        @id @default(cuid())
+  month            Int // 1–12
+  year             Int
+  status           DrawStatus    @default(PENDING)
+  algorithm        DrawAlgorithm @default(RANDOM)
+  winningNumbers   Int[] // 5 numbers
+  prizePool        Float         @default(0)
+  jackpotCarryOver Float         @default(0)
+  publishedAt      DateTime?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  entries DrawEntry[]
+  results DrawResult[]
+
+  @@unique([month, year]) // one draw per month
+  @@map("draws")
+}
+
+model DrawEntry {
+  id     String @id @default(cuid())
+  drawId String
+  userId String
+  scores Int[] // snapshot of user's 5 scores at draw time
+
+  draw Draw @relation(fields: [drawId], references: [id])
+  user User @relation(fields: [userId], references: [id])
+
+  @@unique([drawId, userId]) // one entry per user per draw
+  @@map("draw_entries")
+}
+
+model DrawResult {
+  id          String    @id @default(cuid())
+  drawId      String
+  userId      String
+  matchType   MatchType
+  prizeAmount Float
+  createdAt   DateTime  @default(now())
+
+  draw   Draw    @relation(fields: [drawId], references: [id])
+  winner Winner?
+
+  @@map("draw_results")
+}
+
+model Winner {
+  id                 String             @id @default(cuid())
+  drawResultId       String             @unique
+  userId             String
+  proofUrl           String?
+  verificationStatus VerificationStatus @default(PENDING)
+  paymentStatus      PaymentStatus      @default(PENDING)
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+
+  drawResult DrawResult @relation(fields: [drawResultId], references: [id])
+  user       User       @relation(fields: [userId], references: [id])
+
+  @@map("winners")
+}
