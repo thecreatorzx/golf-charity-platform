@@ -8,13 +8,13 @@
  *
  * 🟢 You can import this file directly.
  */
-export type * from './models/User'
-export type * from './models/Subscription'
-export type * from './models/GolfScore'
-export type * from './models/Charity'
-export type * from './models/CharityContribution'
-export type * from './models/Draw'
-export type * from './models/DrawEntry'
-export type * from './models/DrawResult'
-export type * from './models/Winner'
-export type * from './commonInputTypes'
+export type * from './models/User.js'
+export type * from './models/Subscription.js'
+export type * from './models/GolfScore.js'
+export type * from './models/Charity.js'
+export type * from './models/CharityContribution.js'
+export type * from './models/Draw.js'
+export type * from './models/DrawEntry.js'
+export type * from './models/DrawResult.js'
+export type * from './models/Winner.js'
+export type * from './commonInputTypes.js'
