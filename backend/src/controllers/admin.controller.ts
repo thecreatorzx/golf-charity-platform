@@ -3,8 +3,7 @@ import { AuthRequest } from '../middleware/auth.middleware'
 import { prisma } from '../lib/prisma'
 import { VerificationStatus } from '@prisma/client'
 
-
-// ─── USERS ───────────────────────────────────────────────
+// ─── USERS ──────────────────────────────────────────────
 
 export const getAllUsers = async (_req: AuthRequest, res: Response) => {
   try {
