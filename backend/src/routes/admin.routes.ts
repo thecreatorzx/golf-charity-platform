@@ -8,8 +8,8 @@ import {
   verifyWinner,
   markWinnerPaid,
   getAnalytics,
-} from '../controllers/admin.controller'
-import { authenticate, authorizeAdmin } from '../middleware/auth.middleware'
+} from '../controllers/admin.controller.js'
+import { authenticate, authorizeAdmin } from '../middleware/auth.middleware.js'
 
 const router = Router()
 

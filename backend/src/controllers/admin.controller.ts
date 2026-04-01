@@ -1,6 +1,6 @@
 import { Response } from 'express'
-import { AuthRequest } from '../middleware/auth.middleware'
-import { prisma } from '../lib/prisma'
+import { AuthRequest } from '../middleware/auth.middleware.js'
+import { prisma } from '../lib/prisma.js'
 import { VerificationStatus } from '@prisma/client'
 
 // ─── USERS ──────────────────────────────────────────────

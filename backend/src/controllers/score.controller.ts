@@ -1,6 +1,6 @@
 import { Response } from 'express'
-import { AuthRequest } from '../middleware/auth.middleware'
-import { upsertScore, getUserScores, deleteScore } from '../services/score.service'
+import { AuthRequest } from '../middleware/auth.middleware.js'
+import { upsertScore, getUserScores, deleteScore } from '../services/score.service.js'
 
 export const addScore = async (req: AuthRequest, res: Response) => {
   try {

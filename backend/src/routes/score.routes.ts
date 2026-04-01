@@ -1,6 +1,6 @@
 import { Router } from 'express'
-import { addScore, getScores, removeScore } from '../controllers/score.controller'
-import { authenticate, requireSubscription } from '../middleware/auth.middleware'
+import { addScore, getScores, removeScore } from '../controllers/score.controller.js'
+import { authenticate, requireSubscription } from '../middleware/auth.middleware.js'
 
 const router = Router()
 

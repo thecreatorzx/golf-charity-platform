@@ -1,10 +1,10 @@
 import { Response } from 'express'
-import { AuthRequest } from '../middleware/auth.middleware'
+import { AuthRequest } from '../middleware/auth.middleware.js'
 import {
   runDraw,
   getDrawResultsService,
   getAllDrawsService,
-} from '../services/draw.service'
+} from '../services/draw.service.js'
 
 // Simulate draw
 export const simulateDraw = async (req: AuthRequest, res: Response) => {

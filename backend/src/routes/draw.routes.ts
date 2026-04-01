@@ -4,8 +4,8 @@ import {
   publishDraw,
   fetchDrawResults,
   fetchAllDraws,
-} from '../controllers/draw.controller'
-import { authenticate, authorizeAdmin } from '../middleware/auth.middleware'
+} from '../controllers/draw.controller.js'
+import { authenticate, authorizeAdmin } from '../middleware/auth.middleware.js'
 
 const router = Router()
 

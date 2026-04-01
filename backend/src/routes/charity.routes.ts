@@ -8,8 +8,8 @@ import {
   selectUserCharity,
   fetchUserCharity,
   donateToCharity
-} from '../controllers/charity.controller'
-import { authenticate, authorizeAdmin } from '../middleware/auth.middleware'
+} from '../controllers/charity.controller.js'
+import { authenticate, authorizeAdmin } from '../middleware/auth.middleware.js'
 
 const router = Router()
 

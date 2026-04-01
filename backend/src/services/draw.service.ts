@@ -1,5 +1,5 @@
-import { prisma } from '../lib/prisma'
-import { DRAW_CONFIG } from '../config/draw.config'
+import { prisma } from '../lib/prisma.js'
+import { DRAW_CONFIG } from '../config/draw.config.js'
 
 const { PRIZE_DISTRIBUTION, SUBSCRIPTION_PRICES, PRIZE_POOL_PERCENTAGE } = DRAW_CONFIG
 

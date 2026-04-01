@@ -1,7 +1,7 @@
 import { Response } from 'express'
-import { prisma } from '../lib/prisma'
-import { AuthRequest } from '../middleware/auth.middleware'
-import { calculateCharityAmount } from '../services/subscription.service'
+import { prisma } from '../lib/prisma.js'
+import { AuthRequest } from '../middleware/auth.middleware.js'
+import { calculateCharityAmount } from '../services/subscription.service.js'
 import bcrypt from 'bcryptjs'
 
 // Dashboard

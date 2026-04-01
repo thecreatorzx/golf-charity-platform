@@ -1,6 +1,6 @@
 import { Response } from 'express'
-import { AuthRequest } from '../middleware/auth.middleware'
-import { createOrder, verifyAndActivate, getSubscription, cancelSubscription, mockActivateSubscription  } from '../services/subscription.service'
+import { AuthRequest } from '../middleware/auth.middleware.js'
+import { createOrder, verifyAndActivate, getSubscription, cancelSubscription, mockActivateSubscription  } from '../services/subscription.service.js'
 
 export const initiateSubscription = async (req: AuthRequest, res: Response) => {
   try {

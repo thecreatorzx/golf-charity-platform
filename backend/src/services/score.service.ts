@@ -1,4 +1,4 @@
-import { prisma } from '../lib/prisma'
+import { prisma } from '../lib/prisma.js'
 
 const MAX_SCORES = process.env.MAX_SCORES ? Number(process.env.MAX_SCORES) : 10
 const MIN_SCORE = process.env.MIN_SCORE ? Number(process.env.MIN_SCORE) : 1

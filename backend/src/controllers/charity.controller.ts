@@ -1,5 +1,5 @@
 import { Response } from 'express'
-import { AuthRequest } from '../middleware/auth.middleware'
+import { AuthRequest } from '../middleware/auth.middleware.js'
 import {
   getAllCharities,
   getCharityById,
@@ -8,7 +8,7 @@ import {
   deleteCharity,
   setUserCharity,
   getUserCharity,
-} from '../services/charity.service'
+} from '../services/charity.service.js'
 
 export const listCharities = async (req: AuthRequest, res: Response) => {
   try {

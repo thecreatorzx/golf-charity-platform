@@ -1,4 +1,4 @@
-import { prisma } from '../lib/prisma'
+import { prisma } from '../lib/prisma.js'
 
 export const getAllCharities = async (search?: string) => {
   return prisma.charity.findMany({

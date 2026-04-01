@@ -3,13 +3,13 @@ import cors from 'cors'
 import cookieParser from 'cookie-parser'
 import dotenv from 'dotenv'
 
-import authRoutes from './routes/auth.routes'
-import userRoutes from './routes/user.routes'
-import subscriptionRoutes from './routes/subscription.routes'
-import scoreRoutes from './routes/score.routes'
-import charityRoutes from './routes/charity.routes'
-import drawRoutes from './routes/draw.routes'
-import adminRoutes from './routes/admin.routes'
+import authRoutes from './routes/auth.routes.js'
+import userRoutes from './routes/user.routes.js'
+import subscriptionRoutes from './routes/subscription.routes.js'
+import scoreRoutes from './routes/score.routes.js'
+import charityRoutes from './routes/charity.routes.js'
+import drawRoutes from './routes/draw.routes.js'
+import adminRoutes from './routes/admin.routes.js'
 
 dotenv.config()
 

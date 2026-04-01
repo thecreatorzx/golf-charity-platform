@@ -1,11 +1,11 @@
 import { Router } from 'express'
-import { authenticate, requireSubscription } from '../middleware/auth.middleware'
+import { authenticate, requireSubscription } from '../middleware/auth.middleware.js'
 import {
   getDashboard,
   updateProfile,
   uploadWinnerProof,
   getPublishedDraws,
-} from '../controllers/user.controller'
+} from '../controllers/user.controller.js'
 
 const router = Router()
 
