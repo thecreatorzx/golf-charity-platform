@@ -81,7 +81,11 @@ export const selectUserCharity = async (req, res) => {
       charityId,
       percentage || 10,
     );
-    res.json({ contribution });
+    const fullContribution = await getUserCharity(req.userId);
+    res.json({
+      charity: fullContribution.charity,
+      percentage: fullContribution.percentage,
+    });
   } catch (error) {
     res.status(400).json({ message: error.message || "Server error" });
   }
@@ -90,7 +94,14 @@ export const selectUserCharity = async (req, res) => {
 export const fetchUserCharity = async (req, res) => {
   try {
     const contribution = await getUserCharity(req.userId);
-    res.json({ contribution });
+    if (!contribution) {
+      return res.json(null);
+    }
+
+    res.json({
+      charity: contribution.charity,
+      percentage: contribution.percentage,
+    });
   } catch {
     res.status(500).json({ message: "Server error" });
   }

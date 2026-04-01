@@ -17,7 +17,13 @@ export const getAllUsers = async (_req, res) => {
       },
       orderBy: { createdAt: "desc" },
     });
-    res.json({ users });
+    res.json(
+      users.map((u) => ({
+        ...u,
+        charity: u.charityContribution?.charity || null,
+        percentage: u.charityContribution?.percentage || null,
+      })),
+    );
   } catch {
     res.status(500).json({ message: "Server error" });
   }

@@ -106,14 +106,14 @@ export default function CharitiesPage() {
         {/* Current charity */}
         {userCharity && (
           <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
-            className="mb-6 bg-gradient-to-r from-[#C8F04D]/10 to-transparent border border-[#C8F04D]/20 rounded-2xl p-5 flex items-center justify-between gap-4">
+            className="mb-6 bg-linear-to-r from-[#C8F04D]/10 to-transparent border border-[#C8F04D]/20 rounded-2xl p-5 flex items-center justify-between gap-4">
             <div className="flex items-center gap-4">
               <div className="w-10 h-10 rounded-xl bg-[#C8F04D]/20 flex items-center justify-center">
                 <Heart size={18} className="text-[#C8F04D]" fill="currentColor" />
               </div>
               <div>
                 <div className="text-xs text-white/40 uppercase tracking-widest font-semibold mb-0.5">Currently Supporting</div>
-                <div className="font-bold text-white">{userCharity.charity.name}</div>
+                <div className="font-bold text-white">{userCharity?.charity?.name}</div>
               </div>
             </div>
             <div className="text-right">
