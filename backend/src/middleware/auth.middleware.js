@@ -1,13 +1,7 @@
-import { Request, Response, NextFunction } from 'express'
 import jwt from 'jsonwebtoken'
 import { prisma } from '../lib/prisma.js'
 
-export interface AuthRequest extends Request {
-  userId?: string
-  userRole?: string
-}
-
-export const authenticate = (req: AuthRequest, res: Response, next: NextFunction) => {
+export const authenticate = (req, res, next) => {
   const token = req.cookies?.token
 
   if (!token) {
@@ -16,19 +10,18 @@ export const authenticate = (req: AuthRequest, res: Response, next: NextFunction
   }
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as {
-      userId: string
-      role: string
-    }
-    req.userId = decoded.userId
-    req.userRole = decoded.role
+    const secret = process.env.JWT_SECRET || 'your-secret-key'
+    const decoded = jwt.verify(token, secret)
+    const decodedObj = typeof decoded === 'string' ? JSON.parse(decoded) : decoded
+    req.userId = decodedObj.userId || decodedObj.sub
+    req.userRole = decodedObj.role || 'USER'
     next()
   } catch {
     res.status(401).json({ message: 'Invalid token' })
   }
 }
 
-export const authorizeAdmin = (req: AuthRequest, res: Response, next: NextFunction) => {
+export const authorizeAdmin = (req, res, next) => {
   if (req.userRole !== 'ADMIN') {
     res.status(403).json({ message: 'Forbidden' })
     return
@@ -36,7 +29,7 @@ export const authorizeAdmin = (req: AuthRequest, res: Response, next: NextFuncti
   next()
 }
 
-export const requireSubscription = async (req: AuthRequest, res: Response, next: NextFunction) => {
+export const requireSubscription = async (req, res, next) => {
   try {
     const subscription = await prisma.subscription.findUnique({
       where: { userId: req.userId },
@@ -65,7 +58,7 @@ export const requireSubscription = async (req: AuthRequest, res: Response, next:
   }
 }
 
-export const requireScores = async (req: AuthRequest, res: Response, next: NextFunction) => {
+export const requireScores = async (req, res, next) => {
   try {
     const scoreCount = await prisma.golfScore.count({
       where: { userId: req.userId },

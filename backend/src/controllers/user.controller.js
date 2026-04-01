@@ -1,11 +1,9 @@
-import { Response } from 'express'
 import { prisma } from '../lib/prisma.js'
-import { AuthRequest } from '../middleware/auth.middleware.js'
 import { calculateCharityAmount } from '../services/subscription.service.js'
 import bcrypt from 'bcryptjs'
 
 // Dashboard
-export const getDashboard = async (req: AuthRequest, res: Response) => {
+export const getDashboard = async (req, res) => {
   try {
     const user = await prisma.user.findUnique({
       where: { id: req.userId },
@@ -59,7 +57,7 @@ export const getDashboard = async (req: AuthRequest, res: Response) => {
 }
 
 // Update Profile
-export const updateProfile = async (req: AuthRequest, res: Response) => {
+export const updateProfile = async (req, res) => {
   try {
     const { name, email, currentPassword, newPassword } = req.body
 
@@ -71,7 +69,11 @@ export const updateProfile = async (req: AuthRequest, res: Response) => {
       return res.status(404).json({ message: 'User not found' })
     }
 
-    const updateData: any = {}
+    const updateData = {
+      name: undefined,
+      email: undefined,
+      password: undefined,
+    }
 
     if (name) updateData.name = name
     if (email) updateData.email = email
@@ -103,7 +105,7 @@ export const updateProfile = async (req: AuthRequest, res: Response) => {
 }
 
 // Upload Winner Proof
-export const uploadWinnerProof = async (req: AuthRequest, res: Response) => {
+export const uploadWinnerProof = async (req, res) => {
   try {
     const { winnerId } = req.params
     const { proofUrl } = req.body
@@ -113,7 +115,7 @@ export const uploadWinnerProof = async (req: AuthRequest, res: Response) => {
     }
 
     const winner = await prisma.winner.findUnique({
-      where: { id: winnerId as string },
+      where: { id: winnerId },
     })
 
     if (!winner || winner.userId !== req.userId) {
@@ -121,7 +123,7 @@ export const uploadWinnerProof = async (req: AuthRequest, res: Response) => {
     }
 
     const updated = await prisma.winner.update({
-      where: { id: winnerId as string },
+      where: { id: winnerId },
       data: { proofUrl },
     })
 
@@ -132,7 +134,7 @@ export const uploadWinnerProof = async (req: AuthRequest, res: Response) => {
 }
 
 // Get Published Draws
-export const getPublishedDraws = async (_req: AuthRequest, res: Response) => {
+export const getPublishedDraws = async (_req, res) => {
   try {
     const draws = await prisma.draw.findMany({
       where: { status: 'PUBLISHED' },

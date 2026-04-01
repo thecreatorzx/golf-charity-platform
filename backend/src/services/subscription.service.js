@@ -3,8 +3,8 @@ import Razorpay from 'razorpay'
 import crypto from 'crypto'
 
 export const razorpay = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID!,
-  key_secret: process.env.RAZORPAY_KEY_SECRET!,
+  key_id: process.env.RAZORPAY_KEY_ID,
+  key_secret: process.env.RAZORPAY_KEY_SECRET,
 })
 
 const PLANS = {
@@ -20,7 +20,7 @@ const PLANS = {
   },
 }
 
-export const createOrder = async (userId: string, plan: 'MONTHLY' | 'YEARLY') => {
+export const createOrder = async (userId, plan) => {
   const selectedPlan = PLANS[plan]
 
   if (!selectedPlan) {
@@ -38,16 +38,16 @@ export const createOrder = async (userId: string, plan: 'MONTHLY' | 'YEARLY') =>
 }
 
 export const verifyAndActivate = async (
-  userId: string,
-  plan: 'MONTHLY' | 'YEARLY',
-  razorpay_order_id: string,
-  razorpay_payment_id: string,
-  razorpay_signature: string
+  userId,
+  plan,
+  razorpay_order_id,
+  razorpay_payment_id,
+  razorpay_signature
 ) => {
   // Verify signature
   const body = razorpay_order_id + '|' + razorpay_payment_id
   const expectedSignature = crypto
-    .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET!)
+    .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET)
     .update(body)
     .digest('hex')
 
@@ -90,20 +90,20 @@ export const verifyAndActivate = async (
   return subscription
 }
 
-export const getSubscription = async (userId: string) => {
+export const getSubscription = async (userId) => {
   return prisma.subscription.findUnique({ where: { userId } })
 }
 
 export const calculateCharityAmount = (
-  plan: 'MONTHLY' | 'YEARLY',
-  percentage: number
-): number => {
+  plan,
+  percentage
+) => {
   const selectedPlan = PLANS[plan]
 
   return (selectedPlan.price * percentage) / 100
 }
 
-export const cancelSubscription = async (userId: string) => {
+export const cancelSubscription = async (userId) => {
   const subscription = await prisma.subscription.findUnique({
     where: { userId },
   })
@@ -118,7 +118,7 @@ export const cancelSubscription = async (userId: string) => {
   })
 }
 
-export const mockActivateSubscription = async (userId: string, plan: 'MONTHLY' | 'YEARLY') => {
+export const mockActivateSubscription = async (userId, plan) => {
   const now = new Date()
   const periodEnd = new Date(now)
   const selectedPlan = PLANS[plan]

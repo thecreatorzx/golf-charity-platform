@@ -1,4 +1,3 @@
-import { Request, Response } from 'express'
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
 import { prisma } from '../lib/prisma.js'
@@ -6,11 +5,11 @@ import { prisma } from '../lib/prisma.js'
 const cookieOptions = {
   httpOnly: true,
   secure: process.env.NODE_ENV === 'production',
-  sameSite: 'lax' as const,
+  sameSite: 'lax',
   maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
 }
 
-export const register = async (req: Request, res: Response) => {
+export const register = async (req, res) => {
   try {
     const { name, email, password } = req.body
 
@@ -33,7 +32,7 @@ export const register = async (req: Request, res: Response) => {
 
     const token = jwt.sign(
       { userId: user.id, role: user.role },
-      process.env.JWT_SECRET!,
+      process.env.JWT_SECRET || 'your-secret-key',
       { expiresIn: '7d' }
     )
 
@@ -46,7 +45,7 @@ export const register = async (req: Request, res: Response) => {
   }
 }
 
-export const login = async (req: Request, res: Response) => {
+export const login = async (req, res) => {
   try {
     const { email, password } = req.body
 
@@ -64,7 +63,7 @@ export const login = async (req: Request, res: Response) => {
 
     const token = jwt.sign(
       { userId: user.id, role: user.role },
-      process.env.JWT_SECRET!,
+      process.env.JWT_SECRET || 'your-secret-key',
       { expiresIn: '7d' }
     )
 
@@ -77,12 +76,12 @@ export const login = async (req: Request, res: Response) => {
   }
 }
 
-export const logout = (_req: Request, res: Response) => {
+export const logout = (_req, res) => {
   res.clearCookie('token', cookieOptions)
   res.status(200).json({ message: 'Logged out' })
 }
 
-export const me = async (req: Request & { userId?: string }, res: Response) => {
+export const me = async (req, res) => {
   try {
     const user = await prisma.user.findUnique({
       where: { id: req.userId },
