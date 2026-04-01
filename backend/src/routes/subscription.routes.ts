@@ -5,8 +5,8 @@ import {
   fetchSubscription,
   cancel,
   mockActivate,
-} from '../controllers/subscription.controller'
-import { authenticate } from '../middleware/auth.middleware'
+} from '../controllers/subscription.controller.js'
+import { authenticate } from '../middleware/auth.middleware.js'
 
 const router = Router()
 
