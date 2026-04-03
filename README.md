@@ -129,7 +129,7 @@ Prize pool distribution per draw:
 
 ```bash
 # Clone the repo
-git clone https://github.com/your-username/golf-charity-platform.git
+git clone https://github.com/thecreatorzx/golf-charity-platform.git
 cd golf-charity-platform
 
 # Install all dependencies
