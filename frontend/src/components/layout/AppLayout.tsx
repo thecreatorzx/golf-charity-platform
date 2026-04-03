@@ -70,7 +70,7 @@ function Sidebar({ onClose }: { onClose?: () => void }) {
 
       {/* Nav */}
       <nav className="flex-1 p-3 space-y-0.5 overflow-y-auto">
-        {isAdmin && (
+        {isAdmin ? (
           <>
             <div className="px-3 py-2 text-[10px] font-bold text-white/20 uppercase tracking-widest flex items-center gap-2">
               <Shield size={10} /> Admin
@@ -78,10 +78,13 @@ function Sidebar({ onClose }: { onClose?: () => void }) {
             {adminNav.map((item) => <NavItem key={item.to} {...item} />)}
             <div className="my-3 border-t border-white/8" />
           </>
-        )}
+        ):(
+          <>
         <div className="px-3 py-2 text-[10px] font-bold text-white/20 uppercase tracking-widest">My Account</div>
         {userNav.map((item) => <NavItem key={item.to} {...item} />)}
-      </nav>
+        </>
+        )}
+        </nav>
 
       {/* User */}
       <div className="p-3 border-t border-white/8">

@@ -71,6 +71,7 @@ model User {
   charityContribution CharityContribution?
   drawEntries         DrawEntry[]
   winners             Winner[]
+  drawResults         DrawResult[]
 
   @@map("users")
 }
@@ -94,7 +95,7 @@ model Subscription {
 model GolfScore {
   id         String   @id @default(cuid())
   userId     String
-  score      Int // 1–45 Stableford
+  score      Int
   datePlayed DateTime
   createdAt  DateTime @default(now())
 
@@ -119,12 +120,13 @@ model Charity {
 }
 
 model CharityContribution {
-  id         String   @id @default(cuid())
-  userId     String   @unique
+  id         String @id @default(cuid())
+  userId     String @unique
   charityId  String
-  percentage Float    @default(10) // min 10%
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  percentage Float  @default(10)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
   charity Charity @relation(fields: [charityId], references: [id])
@@ -133,22 +135,25 @@ model CharityContribution {
 }
 
 model Draw {
-  id               String        @id @default(cuid())
-  month            Int // 1–12
-  year             Int
-  status           DrawStatus    @default(PENDING)
-  algorithm        DrawAlgorithm @default(RANDOM)
-  winningNumbers   Int[] // 5 numbers
-  prizePool        Float         @default(0)
-  jackpotCarryOver Float         @default(0)
-  publishedAt      DateTime?
-  createdAt        DateTime      @default(now())
-  updatedAt        DateTime      @updatedAt
+  id    String @id @default(cuid())
+  month Int
+  year  Int
+
+  status    DrawStatus    @default(PENDING)
+  algorithm DrawAlgorithm @default(RANDOM)
+
+  winningNumbers   Int[]
+  prizePool        Float @default(0)
+  jackpotCarryOver Float @default(0)
+
+  publishedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
   entries DrawEntry[]
   results DrawResult[]
 
-  @@unique([month, year]) // one draw per month
+  @@unique([month, year])
   @@map("draws")
 }
 
@@ -156,12 +161,12 @@ model DrawEntry {
   id     String @id @default(cuid())
   drawId String
   userId String
-  scores Int[] // snapshot of user's 5 scores at draw time
+  scores Int[]
 
-  draw Draw @relation(fields: [drawId], references: [id])
-  user User @relation(fields: [userId], references: [id])
+  draw Draw @relation(fields: [drawId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@unique([drawId, userId]) // one entry per user per draw
+  @@unique([drawId, userId])
   @@map("draw_entries")
 }
 
@@ -173,21 +178,24 @@ model DrawResult {
   prizeAmount Float
   createdAt   DateTime  @default(now())
 
-  draw   Draw    @relation(fields: [drawId], references: [id])
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  draw   Draw    @relation(fields: [drawId], references: [id], onDelete: Cascade)
   winner Winner?
 
   @@map("draw_results")
 }
 
 model Winner {
-  id                 String             @id @default(cuid())
-  drawResultId       String             @unique
-  userId             String
-  proofUrl           String?
+  id           String  @id @default(cuid())
+  drawResultId String  @unique
+  userId       String
+  proofUrl     String?
+
   verificationStatus VerificationStatus @default(PENDING)
   paymentStatus      PaymentStatus      @default(PENDING)
-  createdAt          DateTime           @default(now())
-  updatedAt          DateTime           @updatedAt
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   drawResult DrawResult @relation(fields: [drawResultId], references: [id])
   user       User       @relation(fields: [userId], references: [id])

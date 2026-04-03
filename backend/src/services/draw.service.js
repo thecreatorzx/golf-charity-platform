@@ -1,10 +1,13 @@
 import { prisma } from "../lib/prisma.js";
-import { DRAW_CONFIG } from "../config/draw.config.js";
 
-const { PRIZE_DISTRIBUTION, SUBSCRIPTION_PRICES, PRIZE_POOL_PERCENTAGE } =
-  DRAW_CONFIG;
+const PRIZE_POOL_PCT = Number(process.env.PRIZE_POOL_PERCENTAGE || 0.6);
+const FIVE_MATCH_PCT = Number(process.env.FIVE_MATCH_PERCENT || 0.4);
+const FOUR_MATCH_PCT = Number(process.env.FOUR_MATCH_PERCENT || 0.35);
+const THREE_MATCH_PCT = Number(process.env.THREE_MATCH_PERCENT || 0.25);
+const MONTHLY_PRICE = Number(process.env.MONTHLY_PRICE || 999);
+const YEARLY_PRICE = Number(process.env.YEARLY_PRICE || 8999);
 
-// Generate 5 random winning numbers between 1-45
+// Generate 5 unique random numbers between 1–45
 export const generateRandomNumbers = () => {
   const numbers = [];
   while (numbers.length < 5) {
@@ -26,9 +29,8 @@ export const generateWeightedNumbers = async () => {
   });
 
   const pool = [];
-
   Object.entries(freq).forEach(([score, count]) => {
-    const weight = Math.ceil(Math.log(Number(count) + 1)); // log scaling
+    const weight = Math.ceil(Math.log(Number(count) + 1));
     for (let i = 0; i < weight; i++) pool.push(Number(score));
   });
 
@@ -36,7 +38,6 @@ export const generateWeightedNumbers = async () => {
 
   const selected = [];
   const poolCopy = [...pool];
-
   while (selected.length < 5) {
     const idx = Math.floor(Math.random() * poolCopy.length);
     const num = poolCopy[idx];
@@ -46,26 +47,23 @@ export const generateWeightedNumbers = async () => {
   return selected.sort((a, b) => a - b);
 };
 
-// Count how many numbers match
-const countMatches = (userScores, winningNumbers) => {
-  return userScores.filter((s) => winningNumbers.includes(s)).length;
-};
+const countMatches = (userScores, winningNumbers) =>
+  userScores.filter((s) => winningNumbers.includes(s)).length;
 
-// Calculate prize pool from active subscribers
-export const calculatePrizePool = async (carryOver = 0) => {
-  const activeSubscriptions = await prisma.subscription.findMany({
+// ✅ Fix: receives tx so it's transactionally consistent
+export const calculatePrizePool = async (tx, carryOver = 0) => {
+  const activeSubscriptions = await tx.subscription.findMany({
     where: { status: "ACTIVE" },
     select: { plan: true },
   });
 
   const total = activeSubscriptions.reduce((sum, sub) => {
-    return sum + SUBSCRIPTION_PRICES[sub.plan];
+    return sum + (sub.plan === "MONTHLY" ? MONTHLY_PRICE : YEARLY_PRICE);
   }, 0);
 
-  return total * PRIZE_POOL_PERCENTAGE + carryOver;
+  return total * PRIZE_POOL_PCT + carryOver;
 };
 
-// Run draw simulation or publish
 export const runDraw = async (
   month,
   year,
@@ -74,23 +72,35 @@ export const runDraw = async (
 ) => {
   return await prisma.$transaction(async (tx) => {
     let draw = await tx.draw.findUnique({
-      where: { month_year: { month, year } },
+      where: {
+        month_year: {
+          month: Number(month),
+          year: Number(year),
+        },
+      },
     });
+    if (!draw) {
+      return {
+        draw: null,
+        winningNumbers: [],
+        prizePool: 0,
+        results: [],
+        jackpotCarryOver: 0,
+      };
+    }
 
+    // Early return if already published
     if (draw?.status === "PUBLISHED") {
       return {
         draw,
         winningNumbers: draw.winningNumbers,
         prizePool: draw.prizePool,
-        results: await tx.drawResult.findMany({
-          where: { drawId: draw.id },
-        }),
+        results: await tx.drawResult.findMany({ where: { drawId: draw.id } }),
         jackpotCarryOver: draw.jackpotCarryOver,
       };
     }
 
     let winningNumbers = draw?.winningNumbers;
-
     if (!winningNumbers || winningNumbers.length === 0) {
       winningNumbers =
         algorithm === "WEIGHTED"
@@ -98,24 +108,27 @@ export const runDraw = async (
           : generateRandomNumbers();
     }
 
-    const prizePool = await calculatePrizePool(draw?.jackpotCarryOver || 0);
+    // ✅ Fix: pass tx into calculatePrizePool
+    const prizePool = await calculatePrizePool(tx, draw?.jackpotCarryOver || 0);
 
     const activeUsers = await tx.subscription.findMany({
       where: { status: "ACTIVE" },
       include: {
         user: {
           include: {
-            scores: {
-              orderBy: { datePlayed: "desc" },
-              take: 5,
-            },
+            scores: { orderBy: { datePlayed: "desc" }, take: 5 },
           },
         },
       },
     });
 
     draw = await tx.draw.upsert({
-      where: { month_year: { month, year } },
+      where: {
+        month_year: {
+          month: Number(month),
+          year: Number(year),
+        },
+      },
       update: {
         winningNumbers,
         prizePool,
@@ -134,65 +147,48 @@ export const runDraw = async (
       },
     });
 
+    // On re-simulation, clear old entries/results
     if (!publish) {
       await tx.drawEntry.deleteMany({ where: { drawId: draw.id } });
       await tx.drawResult.deleteMany({ where: { drawId: draw.id } });
     }
 
-    const results = {
-      FIVE_MATCH: [],
-      FOUR_MATCH: [],
-      THREE_MATCH: [],
-    };
-
-    // BATCH COLLECTION (instead of sequential writes)
+    const matches = { FIVE_MATCH: [], FOUR_MATCH: [], THREE_MATCH: [] };
     const entries = [];
 
     for (const sub of activeUsers) {
       const userScores = sub.user.scores.map((s) => s.score);
       if (userScores.length < 5) continue;
 
-      const matches = countMatches(userScores, winningNumbers);
+      entries.push({ drawId: draw.id, userId: sub.userId, scores: userScores });
 
-      if (publish && draw?.status === "PUBLISHED") {
-        throw new Error("Draw already published");
-      }
-
-      // Collect entries instead of writing immediately
-      entries.push({
-        drawId: draw.id,
-        userId: sub.userId,
-        scores: userScores,
-      });
-
-      if (matches >= 3) {
+      const matchCount = countMatches(userScores, winningNumbers);
+      if (matchCount >= 3) {
         const matchType =
-          matches === 5
+          matchCount === 5
             ? "FIVE_MATCH"
-            : matches === 4
+            : matchCount === 4
               ? "FOUR_MATCH"
               : "THREE_MATCH";
-
-        results[matchType].push(sub.userId);
+        matches[matchType].push(sub.userId);
       }
     }
 
-    // BULK INSERT
     if (entries.length > 0) {
       await tx.drawEntry.createMany({ data: entries });
     }
 
     let jackpotCarryOver = 0;
-    const fiveMatchPool = prizePool * PRIZE_DISTRIBUTION.FIVE_MATCH;
-    const fourMatchPool = prizePool * PRIZE_DISTRIBUTION.FOUR_MATCH;
-    const threeMatchPool = prizePool * PRIZE_DISTRIBUTION.THREE_MATCH;
+    const fiveMatchPool = prizePool * FIVE_MATCH_PCT;
+    const fourMatchPool = prizePool * FOUR_MATCH_PCT;
+    const threeMatchPool = prizePool * THREE_MATCH_PCT;
 
     // 5 match
-    if (results.FIVE_MATCH.length === 0) {
+    if (matches.FIVE_MATCH.length === 0) {
       jackpotCarryOver = fiveMatchPool;
     } else {
-      const prize = fiveMatchPool / results.FIVE_MATCH.length;
-      for (const userId of results.FIVE_MATCH) {
+      const prize = fiveMatchPool / matches.FIVE_MATCH.length;
+      for (const userId of matches.FIVE_MATCH) {
         const result = await tx.drawResult.create({
           data: {
             drawId: draw.id,
@@ -202,17 +198,15 @@ export const runDraw = async (
           },
         });
         if (publish) {
-          await tx.winner.create({
-            data: { drawResultId: result.id, userId },
-          });
+          await tx.winner.create({ data: { drawResultId: result.id, userId } });
         }
       }
     }
 
     // 4 match
-    if (results.FOUR_MATCH.length > 0) {
-      const prize = fourMatchPool / results.FOUR_MATCH.length;
-      for (const userId of results.FOUR_MATCH) {
+    if (matches.FOUR_MATCH.length > 0) {
+      const prize = fourMatchPool / matches.FOUR_MATCH.length;
+      for (const userId of matches.FOUR_MATCH) {
         const result = await tx.drawResult.create({
           data: {
             drawId: draw.id,
@@ -222,17 +216,15 @@ export const runDraw = async (
           },
         });
         if (publish) {
-          await tx.winner.create({
-            data: { drawResultId: result.id, userId },
-          });
+          await tx.winner.create({ data: { drawResultId: result.id, userId } });
         }
       }
     }
 
     // 3 match
-    if (results.THREE_MATCH.length > 0) {
-      const prize = threeMatchPool / results.THREE_MATCH.length;
-      for (const userId of results.THREE_MATCH) {
+    if (matches.THREE_MATCH.length > 0) {
+      const prize = threeMatchPool / matches.THREE_MATCH.length;
+      for (const userId of matches.THREE_MATCH) {
         const result = await tx.drawResult.create({
           data: {
             drawId: draw.id,
@@ -242,9 +234,7 @@ export const runDraw = async (
           },
         });
         if (publish) {
-          await tx.winner.create({
-            data: { drawResultId: result.id, userId },
-          });
+          await tx.winner.create({ data: { drawResultId: result.id, userId } });
         }
       }
     }
@@ -254,22 +244,59 @@ export const runDraw = async (
       data: { jackpotCarryOver },
     });
 
+    const formattedMatches = await Promise.all(
+      ["FIVE_MATCH", "FOUR_MATCH", "THREE_MATCH"].map(async (matchType) => {
+        const userIds = matches[matchType];
+        const pool =
+          matchType === "FIVE_MATCH"
+            ? fiveMatchPool
+            : matchType === "FOUR_MATCH"
+              ? fourMatchPool
+              : threeMatchPool;
+
+        const users =
+          userIds.length > 0
+            ? await tx.user.findMany({
+                where: { id: { in: userIds } },
+                select: { name: true, email: true },
+              })
+            : [];
+
+        return {
+          matchType,
+          users,
+          prizeAmount: userIds.length > 0 ? pool / userIds.length : 0,
+        };
+      }),
+    );
+
     return {
       draw,
       winningNumbers,
       prizePool,
-      results,
+      results: matches,
+      matches: formattedMatches,
       jackpotCarryOver,
     };
   });
 };
 
 export const getDrawResults = async (month, year) => {
+  if (!Number.isInteger(month) || !Number.isInteger(year)) {
+    throw new Error("Invalid DB query parameters");
+  }
+
   return prisma.draw.findUnique({
-    where: { month_year: { month, year } },
+    where: {
+      month_year: {
+        month,
+        year,
+      },
+    },
     include: {
       results: {
         include: {
+          user: { select: { id: true, name: true, email: true } },
           winner: true,
         },
       },
@@ -290,25 +317,26 @@ export const ensureActiveSubscription = async (userId) => {
   const subscription = await prisma.subscription.findUnique({
     where: { userId },
   });
-
   if (!subscription || subscription.status !== "ACTIVE") {
     throw new Error("Active subscription required");
   }
 };
 
 export const getDrawResultsService = async (userId, role, month, year) => {
-  if (role !== "ADMIN") {
-    await ensureActiveSubscription(userId);
+  const m = Number(month);
+  const y = Number(year);
+
+  if (!Number.isInteger(m) || !Number.isInteger(y)) {
+    throw new Error("Invalid month/year");
   }
 
-  return await getDrawResults(month, year);
+  if (role !== "ADMIN") await ensureActiveSubscription(userId);
+
+  return await getDrawResults(m, y);
 };
+
 export const getAllDrawsService = async (userId, role) => {
   const isAdmin = role === "ADMIN";
-
-  if (!isAdmin) {
-    await ensureActiveSubscription(userId);
-  }
-
+  if (!isAdmin) await ensureActiveSubscription(userId);
   return await getAllDraws(isAdmin);
 };

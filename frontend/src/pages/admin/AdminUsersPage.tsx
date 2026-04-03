@@ -12,7 +12,8 @@ interface UserRecord {
   role: string;
   subscription?: { status: string; plan: string; renewalDate?: string };
   scores?: { id: string; score: number; datePlayed: string }[];
-  charityContribution?: { charity: { name: string }; percentage: number };
+  charity?: { name: string };      
+  percentage?: number;            
   createdAt: string;
 }
 
@@ -144,7 +145,7 @@ export default function AdminUsersPage() {
                       </td>
                       <td className="px-5 py-3.5">
                         <span className="text-white/50 text-xs">
-                          {u.charityContribution ? `${u.charityContribution.charity.name} (${u.charityContribution.percentage}%)` : '—'}
+                          {u.charity ? `${u.charity.name} (${u.percentage}%)` : '—'}
                         </span>
                       </td>
                       <td className="px-5 py-3.5 text-white/30 text-xs">
@@ -200,11 +201,11 @@ export default function AdminUsersPage() {
             </div>
 
             {/* Charity */}
-            {detailUser.charityContribution && (
+            {detailUser.charity && (
               <div className="bg-white/5 rounded-xl px-4 py-3">
                 <div className="text-white/30 text-xs uppercase tracking-widest font-semibold mb-1">Charity</div>
                 <div className="text-white text-sm font-semibold">
-                  {detailUser.charityContribution.charity.name} · {detailUser.charityContribution.percentage}%
+                  {detailUser.charity.name} · {detailUser.percentage}%
                 </div>
               </div>
             )}

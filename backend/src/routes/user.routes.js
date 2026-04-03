@@ -16,12 +16,7 @@ router.get("/dashboard", authenticate, getDashboard);
 
 router.put("/profile", authenticate, updateProfile);
 
-router.post(
-  "/winners/:winnerId/proof",
-  authenticate,
-  requireSubscription,
-  uploadWinnerProof,
-);
+router.post("/winners/:winnerId/proof", authenticate, uploadWinnerProof);
 
 router.get(
   "/draws/published",

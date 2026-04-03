@@ -40,6 +40,7 @@ export default function WinningsPage() {
 
   useEffect(() => { fetchWinnings(); }, []);
 
+  
   const handleProofUpload = async () => {
     if (!proofUrl.trim()) { setError('Enter a valid URL.'); return; }
     setSubmitting(true);

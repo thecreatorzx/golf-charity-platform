@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { ProtectedRoute } from './components/layout/ProtectedRoute';
 import { AnimatePresence } from 'framer-motion';
@@ -24,11 +24,11 @@ import AdminCharitiesPage from './pages/admin/AdminCharitiesPage';
 import AdminWinnersPage from './pages/admin/AdminWinnersPage';
 
 export default function App() {
+  const location = useLocation();
   return (
-    <BrowserRouter>
       <AuthProvider>
         <AnimatePresence mode="wait">
-          <Routes>
+          <Routes location={location} key={location.pathname}>
             {/* Public */}
             <Route path="/" element={<LandingPage />} />
             <Route path="/login" element={<LoginPage />} />
@@ -79,6 +79,5 @@ export default function App() {
           </Routes>
         </AnimatePresence>
       </AuthProvider>
-    </BrowserRouter>
   );
 }

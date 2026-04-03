@@ -116,14 +116,12 @@ export function Modal({ open, onClose, title, children, size = 'md' }: ModalProp
             className={`relative w-full ${sizes[size]} bg-[#0f1117] border border-white/10 rounded-2xl shadow-2xl`}
             onClick={(e) => e.stopPropagation()}
           >
-            {(title || true) && (
-              <div className="flex items-center justify-between p-5 border-b border-white/10">
-                {title && <h3 className="font-bold text-white text-lg">{title}</h3>}
-                <button onClick={onClose} className="ml-auto p-1.5 rounded-lg hover:bg-white/10 text-white/40 hover:text-white transition-colors">
-                  <X size={18} />
-                </button>
-              </div>
-            )}
+            <div className="flex items-center justify-between p-5 border-b border-white/10">
+              {title && <h3 className="font-bold text-white text-lg">{title}</h3>}
+              <button onClick={onClose} className="ml-auto p-1.5 rounded-lg hover:bg-white/10 text-white/40 hover:text-white transition-colors">
+                <X size={18} />
+              </button>
+            </div>
             <div className="p-5">{children}</div>
           </motion.div>
         </motion.div>

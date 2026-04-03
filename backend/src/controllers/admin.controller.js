@@ -17,13 +17,13 @@ export const getAllUsers = async (_req, res) => {
       },
       orderBy: { createdAt: "desc" },
     });
-    res.json(
-      users.map((u) => ({
+    res.json({
+      users: users.map((u) => ({
         ...u,
         charity: u.charityContribution?.charity || null,
         percentage: u.charityContribution?.percentage || null,
       })),
-    );
+    });
   } catch {
     res.status(500).json({ message: "Server error" });
   }
@@ -138,23 +138,46 @@ export const getAnalytics = async (_req, res) => {
     const [
       totalUsers,
       activeSubscriptions,
-      totalCharityContributions,
       totalDraws,
       totalWinners,
+      totalPrizePool,
+      activeSubscribersWithCharity, // ← replaces the old aggregate
     ] = await Promise.all([
       prisma.user.count(),
       prisma.subscription.count({ where: { status: "ACTIVE" } }),
-      prisma.charityContribution.aggregate({ _sum: { percentage: true } }),
       prisma.draw.count(),
       prisma.winner.count(),
+      prisma.draw.aggregate({ _sum: { prizePool: true } }),
+
+      // fetch plan + percentage for every active subscriber who picked a charity
+      prisma.user.findMany({
+        where: {
+          subscription: { status: "ACTIVE" },
+          charityContribution: { isNot: null },
+        },
+        select: {
+          subscription: { select: { plan: true } },
+          charityContribution: { select: { percentage: true } },
+        },
+      }),
     ]);
+
+    // ₹ contributed = subscription price × (percentage / 100)
+    const totalCharityAmount = activeSubscribersWithCharity.reduce((sum, u) => {
+      const price =
+        u.subscription.plan === "MONTHLY"
+          ? process.env.MONTHLY_PRICE
+          : process.env.YEARLY_PRICE;
+      return sum + price * (u.charityContribution.percentage / 100);
+    }, 0);
 
     res.json({
       totalUsers,
       activeSubscriptions,
-      totalCharityContributions: totalCharityContributions._sum.percentage || 0,
+      totalCharityAmount, // ← now a real ₹ figure
       totalDraws,
       totalWinners,
+      totalPrizePool: totalPrizePool._sum.prizePool || 0,
     });
   } catch {
     res.status(500).json({ message: "Server error" });

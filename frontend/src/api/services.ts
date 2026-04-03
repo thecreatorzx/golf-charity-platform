@@ -10,9 +10,8 @@ export const getMe = () => api.get('/auth/me');
 
 // User Profile & Dashboard
 export const getDashboard = () => api.get('/user/dashboard');
-export const updateProfile = (data: { name?: string; currentPassword?: string; newPassword?: string }) =>
+export const updateProfile = (data: { name?: string; email?: string; currentPassword?: string; newPassword?: string }) =>
   api.put('/user/profile', data);
-export const getPublishedDraws = () => api.get('/user/draws/published');
 export const uploadWinnerProof = (winnerId: string, proofUrl: string) =>
   api.post(`/user/winners/${winnerId}/proof`, { proofUrl });
 
@@ -25,13 +24,21 @@ export const deleteScore = (scoreId: string) => api.delete(`/scores/${scoreId}`)
 // Subscriptions
 export const initiateSubscription = (data: { plan: 'MONTHLY' | 'YEARLY' }) =>
   api.post('/subscriptions/initiate', data);
-export const mockActivateSubscription = (data: { razorpay_payment_id: string; razorpay_order_id: string; razorpay_signature: string }) =>
-  api.post('/subscriptions/mock-activate', data);
+export const mockActivateSubscription = (data: {
+  plan: 'MONTHLY' | 'YEARLY';
+}) => api.post('/subscriptions/mock-activate', data);
 export const cancelSubscription = () => api.post('/subscriptions/cancel');
-export const getSubscriptionStatus = () => api.get('/subscriptions/status');
+export const getSubscriptionStatus = () => api.get('/subscriptions');
+export const verifySubscription = (data: {
+  plan: 'MONTHLY' | 'YEARLY';
+  razorpay_payment_id: string;
+  razorpay_order_id: string;
+  razorpay_signature: string;
+}) => api.post('/subscriptions/confirm', data);
+
 
 // Charities
-export const getCharities = (params?: { search?: string; featured?: boolean }) =>
+export const getCharities = (params?: { search?: string; }) =>
   api.get('/charities', { params });
 export const getCharity = (id: string) => api.get(`/charities/${id}`);
 export const selectCharity = (data: { charityId: string; percentage: number }) =>

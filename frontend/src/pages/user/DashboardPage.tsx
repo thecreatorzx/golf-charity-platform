@@ -8,7 +8,7 @@ import { Card, Badge, StatCard, EmptyState } from '@/components/ui';
 import AppLayout from '@/components/layout/AppLayout';
 
 interface DashboardData {
-  subscription: { status: string; plan: string; renewalDate?: string } | null;
+  subscription: { status: string; plan: string; currentPeriodEnd?: string } | null;
   scores: { id: string; score: number; datePlayed: string }[];
   charity: { charity: { name: string }; percentage: number } | null;
   draws: { total: number; upcoming: string };
@@ -72,7 +72,7 @@ export default function DashboardPage() {
           <StatCard
             label="Subscription"
             value={data?.subscription?.status || 'None'}
-            sub={data?.subscription?.renewalDate ? `Renews ${new Date(data.subscription.renewalDate).toLocaleDateString()}` : undefined}
+            sub={data?.subscription?.currentPeriodEnd ? `Renews ${new Date(data.subscription.currentPeriodEnd).toLocaleDateString()}` : undefined}
             icon={<Target size={18} />}
           />
           <StatCard

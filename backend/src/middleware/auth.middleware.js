@@ -14,7 +14,7 @@ export const authenticate = (req, res, next) => {
     const decoded = jwt.verify(token, secret)
     const decodedObj = typeof decoded === 'string' ? JSON.parse(decoded) : decoded
     req.userId = decodedObj.userId || decodedObj.sub
-    req.userRole = decodedObj.role || 'USER'
+    req.userRole = decodedObj.role || 'SUBSCRIBER'
     next()
   } catch {
     res.status(401).json({ message: 'Invalid token' })

@@ -80,7 +80,7 @@ export default function LandingPage() {
             Subscribe Now <ChevronRight size={18} className="group-hover:translate-x-1 transition-transform" />
           </Link>
           <Link to="/charities" className="flex items-center gap-2 text-white/60 hover:text-white font-semibold text-base px-6 py-4 rounded-2xl border border-white/10 hover:border-white/20 transition-all">
-            <Heart size={16} /> Explore Charities
+            <Heart size={16} /> Start Exploring Charities
           </Link>
         </motion.div>
       </section>

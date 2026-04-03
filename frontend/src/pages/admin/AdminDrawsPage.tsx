@@ -9,7 +9,7 @@ interface SimResult {
   winningNumbers: number[];
   matches: { matchType: string; users: { name: string; email: string }[]; prizeAmount: number }[];
   prizePool: number;
-  algorithm: string;
+  draw: {algorithm: string};
 }
 
 interface PublishedDraw {
@@ -202,7 +202,7 @@ export default function AdminDrawsPage() {
                         <h3 className="font-black text-white text-lg">{MONTHS[month - 1]} {year}</h3>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Badge variant="blue">{simResult.algorithm}</Badge>
+                        <Badge variant="blue">{simResult.draw?.algorithm}</Badge>
                         <button onClick={handleSimulate} className="p-1.5 rounded-lg hover:bg-white/10 text-white/40">
                           <RefreshCw size={14} />
                         </button>

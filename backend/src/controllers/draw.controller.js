@@ -27,36 +27,67 @@ export const publishDraw = async (req, res) => {
   try {
     const { month, year, algorithm } = req.body;
 
+    const monthNum = Number(month);
+    const yearNum = Number(year);
+
+    if (
+      !Number.isInteger(monthNum) ||
+      !Number.isInteger(yearNum) ||
+      monthNum < 1 ||
+      monthNum > 12 ||
+      yearNum < 2000 ||
+      yearNum > 2100
+    ) {
+      return res.status(400).json({
+        message: "Invalid month or year",
+      });
+    }
+
     const result = await runDraw(
-      Number(month),
-      Number(year),
+      monthNum,
+      yearNum,
       algorithm || "RANDOM",
       true,
     );
 
-    res.json(result);
+    return res.json(result);
   } catch (error) {
-    res.status(500).json({ message: error.message || "Server error" });
+    console.error("publishDraw error:", error);
+
+    return res.status(500).json({
+      message: error.message || "Server error",
+    });
   }
 };
 
 // Fetch draw results
 export const fetchDrawResults = async (req, res) => {
   try {
-    const { month, year } = req.params;
-
-    const results = await getDrawResultsService(
+    const month = Number(req.params.month);
+    const year = Number(req.params.year);
+    if (!Number.isInteger(month) || !Number.isInteger(year)) {
+      return res.status(400).json({ message: "Invalid month/year params" });
+    }
+    const result = await getDrawResultsService(
       req.userId,
       req.userRole,
-      Number(month),
-      Number(year),
+      month,
+      year,
     );
 
-    res.json({ results });
+    return res.json({ draw: result }); // 🔥 FIXED
   } catch (error) {
-    res
-      .status(error.message === "Active subscription required" ? 403 : 500)
-      .json({ message: error.message || "Server error" });
+    if (error.message === "Active subscription required") {
+      return res.status(403).json({
+        message: "Active subscription required",
+        code: "SUBSCRIPTION_REQUIRED",
+      });
+    }
+
+    console.error("fetchDrawResults error:", error);
+    return res.status(500).json({
+      message: error.message || "Server error",
+    });
   }
 };
 

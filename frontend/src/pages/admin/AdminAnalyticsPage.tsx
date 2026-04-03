@@ -54,7 +54,7 @@ export default function AdminAnalyticsPage() {
             { label: 'Active Subscriptions', value: data?.activeSubscriptions ?? 0, icon: <TrendingUp size={18} />, sub: 'Currently active' },
             { label: 'Total Draws', value: data?.totalDraws ?? 0, icon: <Dices size={18} />, sub: 'Draws published' },
             { label: 'Total Winners', value: data?.totalWinners ?? 0, icon: <Trophy size={18} />, sub: 'Prize recipients' },
-            { label: 'Charity Contributions', value: `₹${(data?.totalCharityContributions ?? 0).toLocaleString()}`, icon: <Heart size={18} />, sub: 'Total donated' },
+            { label: 'Charity Contributions', value: `${(data?.totalCharityContributions ?? 0).toLocaleString()}%`, icon: <Heart size={18} />, sub: 'Total % allocated by users' },
             { label: 'Total Prize Pool', value: `₹${(data?.totalPrizePool ?? 0).toLocaleString()}`, icon: <Activity size={18} />, sub: 'All time' },
           ].map((s, i) => (
             <motion.div key={s.label} initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.07 }}>

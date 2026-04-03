@@ -23,7 +23,9 @@ export const getDashboard = async (req, res) => {
           include: {
             drawResult: {
               include: {
-                draw: { select: { month: true, year: true } },
+                draw: {
+                  select: { month: true, year: true },
+                },
               },
             },
           },
@@ -51,7 +53,51 @@ export const getDashboard = async (req, res) => {
         : 0;
 
     res.json({
-      ...user,
+      subscription: user.subscription,
+      scores: user.scores,
+
+      // rename charityContribution → charity to match frontend interface
+      charity: user.charityContribution
+        ? {
+            charity: user.charityContribution.charity,
+            percentage: user.charityContribution.percentage,
+          }
+        : null,
+
+      // calculate winnings from winners array
+      winnings: {
+        total: user.winners.reduce(
+          (sum, w) => sum + (w.drawResult?.prizeAmount || 0),
+          0,
+        ),
+        pending: user.winners
+          .filter((w) => w.paymentStatus === "PENDING")
+          .reduce((sum, w) => sum + (w.drawResult?.prizeAmount || 0), 0),
+        paid: user.winners
+          .filter((w) => w.paymentStatus === "PAID")
+          .reduce((sum, w) => sum + (w.drawResult?.prizeAmount || 0), 0),
+      },
+
+      // draws summary
+      draws: {
+        total: user.drawEntries.length,
+        upcoming: user.drawEntries.find((e) => e.draw.status === "PENDING")
+          ? `${new Date(0, user.drawEntries.find((e) => e.draw.status === "PENDING").draw.month - 1).toLocaleString("default", { month: "short" })} ${user.drawEntries.find((e) => e.draw.status === "PENDING").draw.year}`
+          : "N/A",
+      },
+      winnerRecords: user.winners.map((w) => ({
+        id: w.id,
+        matchType: w.drawResult.matchType,
+        prizeAmount: w.drawResult?.prizeAmount || 0,
+        verificationStatus: w.verificationStatus,
+        paymentStatus: w.paymentStatus,
+        proofUrl: w.proofUrl,
+        draw: {
+          month: w.drawResult?.draw?.month,
+          year: w.drawResult?.draw?.year,
+        },
+      })),
+
       charityAmount,
     });
   } catch {
@@ -136,7 +182,6 @@ export const uploadWinnerProof = async (req, res) => {
   }
 };
 
-// Get Published Draws
 export const getPublishedDraws = async (_req, res) => {
   try {
     const draws = await prisma.draw.findMany({
@@ -145,14 +190,24 @@ export const getPublishedDraws = async (_req, res) => {
       include: {
         results: {
           include: {
-            winner: true,
+            user: { select: { name: true } }, // ← add this
           },
         },
-        _count: { select: { entries: true } },
+        _count: { select: { entries: true, results: true } },
       },
     });
 
-    res.json({ draws });
+    // map to shape frontend expects
+    const formatted = draws.map((d) => ({
+      ...d,
+      results: d.results.map((r) => ({
+        matchType: r.matchType,
+        prizeAmount: r.prizeAmount,
+        user: { name: r.user?.name || "Unknown" },
+      })),
+    }));
+
+    res.json({ draws: formatted });
   } catch {
     res.status(500).json({ message: "Server error" });
   }

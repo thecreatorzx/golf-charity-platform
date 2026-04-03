@@ -22,6 +22,7 @@ export const updateCharity = async (id, data) => {
 };
 
 export const deleteCharity = async (id) => {
+  await prisma.charityContribution.deleteMany({ where: { charityId: id } });
   return prisma.charity.delete({ where: { id } });
 };
 

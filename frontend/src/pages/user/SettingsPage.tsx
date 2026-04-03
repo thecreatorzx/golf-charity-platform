@@ -1,7 +1,7 @@
-import { useState, FormEvent, SetStateAction } from 'react';
+import { useState, SyntheticEvent , SetStateAction } from 'react';
 import { motion } from 'framer-motion';
 import { User, Lock, CreditCard, AlertTriangle } from 'lucide-react';
-import { updateProfile, cancelSubscription, getSubscriptionStatus } from '../../api/services';
+import { updateProfile, cancelSubscription, getSubscriptionStatus, getDashboard } from '../../api/services';
 import { useAuth } from '../../context/AuthContext';
 import { Button, Input, Card, Modal } from '../../components/ui';
 import AppLayout from '../../components/layout/AppLayout';
@@ -10,7 +10,7 @@ import { useEffect } from 'react';
 interface SubStatus {
   status: string;
   plan?: string;
-  renewalDate?: string;
+  currentPeriodEnd?: string;
 }
 
 export default function SettingsPage() {
@@ -31,12 +31,12 @@ export default function SettingsPage() {
   const [cancelling, setCancelling] = useState(false);
 
   useEffect(() => {
-    getSubscriptionStatus()
-      .then((r: { data: SetStateAction<SubStatus | null>; }) => setSub(r.data))
+    getDashboard()
+      .then((r: { data: { subscription: SubStatus } }) => setSub(r.data.subscription))
       .catch(() => setSub(null));
   }, []);
 
-  const handleProfile = async (e: FormEvent) => {
+  const handleProfile = async (e: SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
     setProfileError(''); setProfileMsg('');
     setProfileLoading(true);
@@ -52,7 +52,7 @@ export default function SettingsPage() {
     }
   };
 
-  const handlePassword = async (e: FormEvent) => {
+  const handlePassword = async (e: SyntheticEvent ) => {
     e.preventDefault();
     setPassError(''); setPassMsg('');
     if (newPassword.length < 8) { setPassError('New password must be at least 8 characters.'); return; }
@@ -73,7 +73,7 @@ export default function SettingsPage() {
     setCancelling(true);
     try {
       await cancelSubscription();
-      setSub((prev) => prev ? { ...prev, status: 'INACTIVE' } : null);
+      setSub((prev) => prev ? { ...prev, status: 'CANCELLED' } : null);
       setCancelOpen(false);
     } catch {
       // handle
@@ -161,10 +161,14 @@ export default function SettingsPage() {
                       <span className="font-bold text-white text-sm">{sub.plan}</span>
                     </div>
                   )}
-                  {sub.renewalDate && (
+                  {sub.currentPeriodEnd && (
                     <div className="flex items-center justify-between py-3 border-b border-white/8">
                       <span className="text-white/50 text-sm">Renewal Date</span>
-                      <span className="text-white/70 text-sm">{new Date(sub.renewalDate).toLocaleDateString()}</span>
+                      <span className="text-white/70 text-sm">{new Date(sub.currentPeriodEnd).toLocaleDateString('en-IN', {
+                        day: 'numeric',
+                        month: 'short',
+                        year: 'numeric'
+                      })}</span>
                     </div>
                   )}
                   {sub.status === 'ACTIVE' && (
